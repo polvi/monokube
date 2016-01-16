@@ -8,7 +8,7 @@ import (
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/testutils"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/agent"
+	"io/ioutil"
 	kubeapiserver "k8s.io/kubernetes/cmd/kube-apiserver/app"
 	controller "k8s.io/kubernetes/cmd/kube-controller-manager/app"
 	scheduler "k8s.io/kubernetes/plugin/cmd/kube-scheduler/app"
@@ -20,23 +20,24 @@ import (
 )
 
 var (
-	/*
-		remoteHost   = flag.String("remote-host", "localhost:2222", "ssh host to connect to")
-		remoteListen = flag.String("remote-listen", "127.0.0.1:8080", "remote interface and port to serve on")
-		sshUser      = flag.String("ssh-user", "core", "ssh user to use")
-		manifest     = flag.String("manifest", "pods.yml", "file to serve on the remote connection")
-	*/
-	remoteListen = "127.0.0.1:8080"
-	sshUser      = "core"
+	remoteListen   = "127.0.0.1:8080"
+	sshUser        = "core"
+	sshKeyfile     = "/Users/polvi/.vagrant.d/insecure_private_key"
+	clusterIPRange = "10.1.30.0/24"
 )
 
-func SSHAgent() ssh.AuthMethod {
-	if sshAgent, err := net.Dial("unix", os.Getenv("SSH_AUTH_SOCK")); err == nil {
-		return ssh.PublicKeysCallback(agent.NewClient(sshAgent).Signers)
+func PublicKeyFile(file string) ssh.AuthMethod {
+	buffer, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil
 	}
-	return nil
-}
 
+	key, err := ssh.ParsePrivateKey(buffer)
+	if err != nil {
+		return nil
+	}
+	return ssh.PublicKeys(key)
+}
 func executeCmd(cmd, remoteHost string, config *ssh.ClientConfig) (string, error) {
 	conn, err := ssh.Dial("tcp", remoteHost, config)
 	if err != nil {
@@ -66,7 +67,7 @@ func main() {
 	config := &ssh.ClientConfig{
 		User: sshUser,
 		Auth: []ssh.AuthMethod{
-			SSHAgent(),
+			PublicKeyFile(sshKeyfile),
 		},
 	}
 	for _, remoteHost := range *hosts {
@@ -128,8 +129,12 @@ func main() {
 		s := kubeapiserver.NewAPIServer()
 		fs := pflag.NewFlagSet("apiserver", pflag.ContinueOnError)
 		s.AddFlags(fs)
-		fs.Parse([]string{"--service-cluster-ip-range=10.1.30.0/24", "--etcd-servers=http://localhost:2379", "--ssh-keyfile=/Users/polvi/.vagrant.d/insecure_private_key", "--ssh-user=core"})
-		//fs.Parse([]string{"--service-cluster-ip-range=10.1.30.0/24", "--etcd-servers=http://localhost:2379"})
+		fs.Parse([]string{
+			"--service-cluster-ip-range=" + clusterIPRange,
+			"--etcd-servers=http://127.0.0.1:2379",
+			"--ssh-keyfile=" + sshKeyfile,
+			"--ssh-user=" + sshUser,
+		})
 		s.Run([]string{})
 	}()
 
