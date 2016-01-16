@@ -17,7 +17,6 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"sync"
 )
 
 var (
@@ -70,50 +69,53 @@ func main() {
 			SSHAgent(),
 		},
 	}
-	wg := &sync.WaitGroup{}
-	wg.Add(1)
 	for _, remoteHost := range *hosts {
 		// Dial your ssh server.
 		go func(host string) {
-			conn, err := ssh.Dial("tcp", host, config)
-			if err != nil {
-				log.Fatalf("unable to connect: %s", err)
-				return
-			}
-			defer conn.Close()
-
-			// Request the remote side to open port 8080 on all interfaces.
-			l, err := conn.Listen("tcp", remoteListen)
-			if err != nil {
-				log.Fatalf("unable to register tcp forward: %v", err)
-				return
-			}
-			defer l.Close()
-
 			// Serve HTTP with your SSH server acting as a reverse proxy.
 			go func() {
-				fwd, _ := forward.New()
-				http.Serve(l, http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
-					req.URL = testutils.ParseURI("http://localhost:8080")
-					fwd.ServeHTTP(resp, req)
-				}))
+				for {
+					conn, err := ssh.Dial("tcp", host, config)
+					if err != nil {
+						log.Fatalf("unable to connect: %s", err)
+						return
+					}
+					defer conn.Close()
+
+					// Request the remote side to open port 8080 on all interfaces.
+					l, err := conn.Listen("tcp", remoteListen)
+					if err != nil {
+						log.Fatalf("unable to register tcp forward: %v", err)
+						return
+					}
+					defer l.Close()
+					fwd, _ := forward.New()
+					http.Serve(l, http.HandlerFunc(func(resp http.ResponseWriter, req *http.Request) {
+						req.URL = testutils.ParseURI("http://localhost:8080")
+						fwd.ServeHTTP(resp, req)
+					}))
+					log.Println("proxy connection broken, reconnecting....")
+				}
 			}()
 			go func() {
 				// this will block, and the kubelet will stop once the connection is broken
-				ip, _, err := net.SplitHostPort(host)
-				if err != nil {
-					log.Fatalf("unable split host port: %v", err)
-					return
+				// loop for reconnection
+				for {
+					ip, _, err := net.SplitHostPort(host)
+					if err != nil {
+						log.Fatalf("unable split host port: %v", err)
+						return
+					}
+					cmd := fmt.Sprintf("sudo /usr/bin/kubelet --hostname-override=%s --api-servers=http://localhost:8080", ip)
+					_, err = executeCmd(cmd, host, config)
+					if err != nil {
+						log.Fatalf("unable to execute kubelet: %v", err)
+						return
+					}
+					// if we got here something went wrong
+					log.Println("kubelet connection broken, reconnecting....")
 				}
-				cmd := fmt.Sprintf("sudo /usr/bin/kubelet --hostname-override=%s --api-servers=http://localhost:8080", ip)
-				out, err := executeCmd(cmd, host, config)
-				if err != nil {
-					log.Fatalf("unable to execute kubelet: %v", err)
-					return
-				}
-				fmt.Println(out)
 			}()
-
 			<-make(chan interface{})
 		}(remoteHost)
 	}
@@ -146,6 +148,5 @@ func main() {
 		fs.Parse([]string{})
 		s.Run([]string{})
 	}()
-
-	wg.Wait()
+	<-make(chan interface{})
 }
