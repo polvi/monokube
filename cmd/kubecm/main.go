@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/coreos/etcd/etcdmain"
+	"github.com/jpillora/backoff"
 	"github.com/spf13/pflag"
 	"github.com/vulcand/oxy/forward"
 	"github.com/vulcand/oxy/testutils"
@@ -12,6 +13,7 @@ import (
 	kubeapiserver "k8s.io/kubernetes/cmd/kube-apiserver/app"
 	controller "k8s.io/kubernetes/cmd/kube-controller-manager/app"
 	scheduler "k8s.io/kubernetes/plugin/cmd/kube-scheduler/app"
+	"time"
 
 	"log"
 	"net"
@@ -75,19 +77,27 @@ func main() {
 		go func(host string) {
 			// Serve HTTP with your SSH server acting as a reverse proxy.
 			go func() {
+				b := &backoff.Backoff{
+					//These are the defaults
+					Min:    100 * time.Millisecond,
+					Max:    10 * time.Second,
+					Factor: 2,
+					Jitter: false,
+				}
 				for {
 					conn, err := ssh.Dial("tcp", host, config)
 					if err != nil {
-						log.Fatalf("unable to connect: %s", err)
-						return
+						log.Println("unable to connect, retrying:", err)
+						time.Sleep(b.Duration())
+						continue
 					}
 					defer conn.Close()
 
 					// Request the remote side to open port 8080 on all interfaces.
 					l, err := conn.Listen("tcp", remoteListen)
 					if err != nil {
-						log.Fatalf("unable to register tcp forward: %v", err)
-						return
+						log.Println("unable to register tcp forward, retrying:", err)
+						continue
 					}
 					defer l.Close()
 					fwd, _ := forward.New()
@@ -101,6 +111,14 @@ func main() {
 			go func() {
 				// this will block, and the kubelet will stop once the connection is broken
 				// loop for reconnection
+				b := &backoff.Backoff{
+					//These are the defaults
+					Min:    100 * time.Millisecond,
+					Max:    10 * time.Second,
+					Factor: 2,
+					Jitter: false,
+				}
+
 				for {
 					ip, _, err := net.SplitHostPort(host)
 					if err != nil {
@@ -110,11 +128,13 @@ func main() {
 					cmd := fmt.Sprintf("sudo /usr/bin/kubelet --hostname-override=%s --api-servers=http://localhost:8080", ip)
 					_, err = executeCmd(cmd, host, config)
 					if err != nil {
-						log.Fatalf("unable to execute kubelet: %v", err)
-						return
+						log.Println("unable to execute kubelet, retrying:", err)
 					}
 					// if we got here something went wrong
-					log.Println("kubelet connection broken, reconnecting....")
+					dur := b.Duration()
+					log.Println("kubelet connection broken, reconnecting in", dur)
+					time.Sleep(dur)
+
 				}
 			}()
 			<-make(chan interface{})
