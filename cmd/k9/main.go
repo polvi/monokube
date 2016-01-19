@@ -73,7 +73,7 @@ func main() {
 	}
 
 	mfs := pflag.NewFlagSet("main", pflag.ExitOnError)
-	hosts := mfs.StringSlice("hosts", []string{}, "list of hosts to make part of cluster")
+	nodes := mfs.StringSlice("nodes", []string{}, "list of nodes to make part of cluster")
 	mfs.Parse(os.Args)
 
 	config := &ssh.ClientConfig{
@@ -82,7 +82,7 @@ func main() {
 			PublicKeyFile(sshKeyfile),
 		},
 	}
-	for _, remoteHost := range *hosts {
+	for _, remoteHost := range *nodes {
 		// Dial your ssh server.
 		go func(host string) {
 			// Serve HTTP with your SSH server acting as a reverse proxy.

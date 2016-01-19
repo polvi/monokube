@@ -39,7 +39,7 @@ Server Version: version.Info{Major:"1", Minor:"1", GitVersion:"v1.1.4+$Format:%h
 k9 can optionally setup ssh reverse proxy tunnels to nodes running the kubelet, making it painless to setup a secure cluster. Additionally it will invoke the kubelet with the right command line args to connect to the tunnel.
 
 ```
-./k9 --hosts=host1.mylab:22,host2.mylab:22
+./k9 --nodes=host1.mylab:22,host2.mylab:22
 ```
 
 ### Example using Vagrant
@@ -50,10 +50,10 @@ Grab [coreos-vagrant](https://github.com/coreos/coreos-vagrant) and edit `config
 vagrant up
 ```
 
-`coreos-vagrant` will bring up the nodes with static IPs, so you can use them to target using the `--hosts` flag on `k9`. 
+`coreos-vagrant` will bring up the nodes with static IPs, so you can use them to target using the `--nodes` flag on `k9`. 
 
 ```
-./k9 --hosts=172.17.8.101:22,172.17.8.102:22,172.17.8.103:22
+./k9 --nodes=172.17.8.101:22,172.17.8.102:22,172.17.8.103:22
 ```
 
 Now check that the nodes came up with `kubectl`
