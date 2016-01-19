@@ -26,8 +26,6 @@ import (
 
 var (
 	remoteListen   = "127.0.0.1:8080"
-	sshUser        = "core"
-	sshKeyfile     = "/Users/polvi/.vagrant.d/insecure_private_key"
 	clusterIPRange = "10.1.30.0/24"
 )
 
@@ -74,12 +72,15 @@ func main() {
 
 	mfs := pflag.NewFlagSet("main", pflag.ExitOnError)
 	nodes := mfs.StringSlice("nodes", []string{}, "list of nodes to make part of cluster")
+	sshKeyfile := mfs.String("ssh-keyfile", "/Users/polvi/.vagrant.d/insecure_private_key", "private ssh key to use for tunnels")
+	sshUser := mfs.String("ssh-user", "core", "ssh user to use for tunnels")
+	clusterIPRange := mfs.String("service-cluster-ip-range", "10.1.30.0/24", "A CIDR notation IP range from which to assign service cluster IPs. This must not overlap with any IP ranges assigned to nodes for pods.")
 	mfs.Parse(os.Args)
 
 	config := &ssh.ClientConfig{
-		User: sshUser,
+		User: *sshUser,
 		Auth: []ssh.AuthMethod{
-			PublicKeyFile(sshKeyfile),
+			PublicKeyFile(*sshKeyfile),
 		},
 	}
 	for _, remoteHost := range *nodes {
@@ -164,10 +165,10 @@ func main() {
 		fs := pflag.NewFlagSet("apiserver", pflag.ContinueOnError)
 		s.AddFlags(fs)
 		fs.Parse([]string{
-			"--service-cluster-ip-range=" + clusterIPRange,
+			"--service-cluster-ip-range=" + *clusterIPRange,
 			"--etcd-servers=http://127.0.0.1:2379",
-			"--ssh-keyfile=" + sshKeyfile,
-			"--ssh-user=" + sshUser,
+			"--ssh-keyfile=" + *sshKeyfile,
+			"--ssh-user=" + *sshUser,
 		})
 		s.Run([]string{})
 	}()
