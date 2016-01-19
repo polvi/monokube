@@ -7,6 +7,8 @@ k9 is a single binary that includes everything you need to run kubernetes locall
 
 ```
 $ curl https://media.githubusercontent.com/media/polvi/k9/master/bin/darwin/amd64/k9 > k9
+$ shasum k9 
+0c7c42db92c9be672a50c3e988004ef2cd2caf04  k9
 $ chmod +x k9
 ```
 
