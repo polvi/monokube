@@ -12,7 +12,10 @@ import (
 	"io/ioutil"
 	kubeapiserver "k8s.io/kubernetes/cmd/kube-apiserver/app"
 	controller "k8s.io/kubernetes/cmd/kube-controller-manager/app"
+	"k8s.io/kubernetes/pkg/kubectl/cmd"
+	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	scheduler "k8s.io/kubernetes/plugin/cmd/kube-scheduler/app"
+	"path/filepath"
 	"time"
 
 	"log"
@@ -60,11 +63,18 @@ func executeCmd(cmd, remoteHost string, config *ssh.ClientConfig) (string, error
 }
 
 func main() {
-	// weirdness because etcdmain uses os.Args and so I need to override for my flags
+	// embed kubectl
+	if filepath.Base(os.Args[0]) == "kubectl" {
+		cmd := cmd.NewKubectlCommand(cmdutil.NewFactory(nil), os.Stdin, os.Stdout, os.Stderr)
+		if err := cmd.Execute(); err != nil {
+			os.Exit(1)
+		}
+		return
+	}
+
 	mfs := pflag.NewFlagSet("main", pflag.ExitOnError)
 	hosts := mfs.StringSlice("hosts", []string{}, "list of hosts to make part of cluster")
 	mfs.Parse(os.Args)
-	os.Args = []string{"arg0"}
 
 	config := &ssh.ClientConfig{
 		User: sshUser,
@@ -97,6 +107,7 @@ func main() {
 					l, err := conn.Listen("tcp", remoteListen)
 					if err != nil {
 						log.Println("unable to register tcp forward, retrying:", err)
+						time.Sleep(b.Duration())
 						continue
 					}
 					defer l.Close()
@@ -106,6 +117,7 @@ func main() {
 						fwd.ServeHTTP(resp, req)
 					}))
 					log.Println("proxy connection broken, reconnecting....")
+					time.Sleep(b.Duration())
 				}
 			}()
 			go func() {
@@ -142,6 +154,8 @@ func main() {
 	}
 
 	go func() {
+		// etcd reads os.Args so we have to use mess with them
+		os.Args = []string{"etcd"}
 		etcdmain.Main()
 	}()
 
