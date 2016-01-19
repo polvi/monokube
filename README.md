@@ -1,6 +1,6 @@
 # monokube
 
-monokube is a single binary that includes everything you need to run kubernetes  including apiserver, controller-manager, scheduler and etcd. It is different than hyperkube because all processes are ran in go-routines in a single binary, making it a compelte working environment in one command. 
+monokube is a single binary that includes everything you need to run kubernetes  including apiserver, controller-manager, scheduler and etcd. It is different than hyperkube because all processes are ran in go-routines in a single binary, making it a complete working environment in one command. 
 
 Additionally, monokube includes functionality that allows you to set up reverse ssh tunnels from your nodes to your locally running cluster (on your laptop), making it painless to setup a properly functioning cluster. This is particularly useful if you want to use kubernetes as an alternative to tools such as puppet or ansible for initial host bootstrapping. 
 
