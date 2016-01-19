@@ -6,7 +6,7 @@ k9 is a single binary that includes everything you need to run kubernetes locall
 ## Install
 
 ```
-$ wget http://...
+$ curl https://media.githubusercontent.com/media/polvi/k9/master/bin/darwin/amd64/k9 > k9
 $ chmod +x k9
 ```
 
