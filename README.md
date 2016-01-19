@@ -6,6 +6,8 @@ Additionally, monokube includes functionality that allows you to set up reverse 
 
 ## Install
 
+monokube is intended to be ran from your laptop or development environment. 
+
 ```
 $ curl https://media.githubusercontent.com/media/polvi/monokube/master/bin/darwin/amd64/monokube > monokube
 $ shasum monokube 
