@@ -15,6 +15,7 @@ import (
 	"k8s.io/kubernetes/pkg/kubectl/cmd"
 	cmdutil "k8s.io/kubernetes/pkg/kubectl/cmd/util"
 	scheduler "k8s.io/kubernetes/plugin/cmd/kube-scheduler/app"
+	"os/user"
 	"path/filepath"
 	"time"
 
@@ -70,9 +71,14 @@ func main() {
 		return
 	}
 
+	usr, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	mfs := pflag.NewFlagSet("main", pflag.ExitOnError)
 	nodes := mfs.StringSlice("nodes", []string{}, "list of nodes to make part of cluster")
-	sshKeyfile := mfs.String("ssh-keyfile", "/Users/polvi/.vagrant.d/insecure_private_key", "private ssh key to use for tunnels")
+	sshKeyfile := mfs.String("ssh-keyfile", usr.HomeDir+"/.vagrant.d/insecure_private_key", "private ssh key to use for tunnels")
 	sshUser := mfs.String("ssh-user", "core", "ssh user to use for tunnels")
 	clusterIPRange := mfs.String("service-cluster-ip-range", "10.1.30.0/24", "A CIDR notation IP range from which to assign service cluster IPs. This must not overlap with any IP ranges assigned to nodes for pods.")
 	mfs.Parse(os.Args)
