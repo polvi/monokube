@@ -9,16 +9,16 @@ Additionally, monokube includes functionality that allows you to set up reverse 
 monokube is intended to be ran from your laptop or development environment. 
 
 ```
-$ curl https://media.githubusercontent.com/media/polvi/monokube/master/bin/darwin/amd64/monokube > monokube
-$ shasum monokube 
-291e9ad46763cd2e2ac169f2295f668f3f47b603  monokube
-$ chmod +x monokube
+curl https://media.githubusercontent.com/media/polvi/monokube/master/bin/darwin/amd64/monokube > monokube
+shasum monokube 
+ 1e9ad46763cd2e2ac169f2295f668f3f47b603  monokube
+chmod +x monokube
 ```
 
 `kubectl` is included with binary too and can be accessed by creating a symlink to the original binary:
 
 ```
-$ ln -s ./monokube ./kubectl 
+ln -s ./monokube ./kubectl 
 ```
 
 ## Basic Master
@@ -27,14 +27,14 @@ $ ln -s ./monokube ./kubectl
 At this point `monokube` is your complete master control plane and can be started with:
 
 ```
-$ ./monokube
+./monokube
 ...
 ```
 
 Once running, test it out with kubectl
 
 ```
-$ ./kubectl version
+./kubectl version
 Client Version: version.Info{Major:"1", Minor:"1", GitVersion:"v1.1.4+$Format:%h$", GitCommit:"$Format:%H$", GitTreeState:"not a git tree"}
 Server Version: version.Info{Major:"1", Minor:"1", GitVersion:"v1.1.4+$Format:%h$", GitCommit:"$Format:%H$", GitTreeState:"not a git tree"}
 ```
