@@ -15,12 +15,6 @@ shasum monokube
 chmod +x monokube
 ```
 
-`kubectl` is included with binary too and can be accessed by creating a symlink to the original binary:
-
-```
-ln -s ./monokube ./kubectl 
-```
-
 ## Basic Master
 
 
@@ -28,10 +22,20 @@ At this point `monokube` is your complete master control plane and can be starte
 
 ```
 ./monokube
+2016-01-19 14:42:25.225409 I | etcdmain: etcd Version: 2.2.1
+2016-01-19 14:42:25.225434 I | etcdmain: Git SHA: Not provided (use ./build instead of go build)
+2016-01-19 14:42:25.225439 I | etcdmain: Go Version: go1.5.3
+2016-01-19 14:42:25.225444 I | etcdmain: Go OS/Arch: darwin/amd64
+I0119 14:42:25.225456   48048 plugins.go:71] No cloud provider specified.
+2016-01-19 14:42:25.225453 I | etcdmain: setting maximum number of CPUs to 4, total number of available CPUs is 4
+2016-01-19 14:42:25.225470 W | etcdmain: no data-dir provided, using default data-dir ./default.etcd
+W0119 14:42:25.225219   48048 controllermanager.go:229] Neither --kubeconfig nor --master was specified.  Using default API client.  This might not work.
+I0119 14:42:25.225743   48048 master.go:368] Node port range unspecified. Defaulting to 30000-32767.
+I0119 14:42:25.225913   48048 master.go:390] Will report 10.7.3.103 as public IP address.
 ...
 ```
 
-Once running, test it out with kubectl
+Once running, test it out with kubectl (the API server will be at 127.0.0.1:8080):
 
 ```
 ./kubectl version
@@ -46,6 +50,13 @@ monokube can optionally setup ssh reverse proxy tunnels to nodes running the kub
 ```
 ./monokube --nodes=host1.mylab:22,host2.mylab:22
 ```
+
+`kubectl` is included with binary too and can be accessed by creating a symlink to the original binary:
+
+```
+ln -s ./monokube ./kubectl 
+```
+
 
 ### Example using Vagrant
 
