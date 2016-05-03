@@ -2,7 +2,7 @@
 
 This project is deprecated. Future work is going into https://github.com/coreos/bootkube
 
-[deprecated](http://badges.github.io/stability-badges/dist/deprecated.svg)
+[![deprecated](http://badges.github.io/stability-badges/dist/deprecated.svg)](http://github.com/badges/stability-badges)
 
 # monokube
 
