@@ -1,3 +1,9 @@
+# monokube is deprecated
+
+This project is deprecated. Future work is going into https://github.com/coreos/bootkube
+
+[![deprecated](http://badges.github.io/stability-badges/dist/deprecated.svg)](http://github.com/badges/stability-badges)
+
 # monokube
 
 monokube is a single binary that includes everything you need to run kubernetes  including apiserver, controller-manager, scheduler and etcd. It is different than hyperkube because all processes are ran in go-routines in a single binary, making it a complete working environment in one command. 
